@@ -9,6 +9,7 @@ pub struct ExtensionManifest {
     pub size_bytes: Option<u64>,
 }
 
+#[allow(dead_code)]
 pub async fn fetch_remote_index(url: &str) -> anyhow::Result<Vec<ExtensionManifest>> {
     let manifests = reqwest::get(url)
         .await?

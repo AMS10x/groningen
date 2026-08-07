@@ -1,17 +1,34 @@
-# groningen
+# Groningen
 
-`groningen` is a fast local-first machine translation CLI and TUI for Linux and macOS. It is designed as a portfolio-grade Rust systems project: modular, async, extension-oriented, and ready for a real inference backend such as ONNX, Candle, or CTranslate2.
+Groningen is a local-first machine translation CLI and terminal UI written in Rust. It demonstrates a polished product flow for installing language-pair "extensions", translating from either an interactive workspace or Unix pipes, and swapping a mock engine for a real local inference backend later.
 
-## Highlights
+> Status: demo-ready prototype. The bundled model URLs intentionally point at mock locations; if a download fails, Groningen writes a deterministic mock model file so the install and activation flow can still be reviewed offline.
 
-- **Friendly dual-pane TUI** built with Ratatui and Crossterm.
-- **Themeable settings pane** with Catppuccin Mocha, Groningen Light, and Terminal Classic palettes.
-- **Extension-style language installer** inspired by VS Code and LazyVim: focus the Extensions pane and press `i` to install the selected language pair.
-- **Responsive event loop** using Tokio MPSC channels so downloads and translation never block rendering.
-- **Unix pipe mode** for scripts and shell workflows.
-- **Pluggable engine trait** with a dummy offline engine for quick demos.
+## Why this project exists
 
-## Install
+Groningen is built as a portfolio-grade Rust systems app with clear seams for future work:
+
+- a `TranslationEngine` trait for real ONNX, Candle, or CTranslate2 adapters;
+- async model download/install plumbing;
+- a responsive Ratatui UI that does not block while translating or downloading;
+- a small CLI that works well in shell scripts.
+
+## Features
+
+- **Interactive dual-pane TUI** for source and translated text.
+- **Language extension drawer** with install/activate behavior inspired by VS Code and LazyVim.
+- **Installed-model detection** when the TUI starts, so previously downloaded extensions are marked immediately.
+- **Active language-pair routing** so TUI translations use the selected extension instead of hard-coded labels.
+- **Theme switcher** with Catppuccin Mocha, Groningen Light, and Terminal Classic.
+- **Unix pipe mode** for scriptable translation.
+- **Offline-friendly mock engine** that translates a small vocabulary and reverses unknown words.
+
+## Requirements
+
+- Rust stable toolchain, edition 2021 compatible.
+- Linux or macOS terminal with ANSI color support.
+
+## Installation
 
 ```bash
 git clone https://github.com/AMS10x/groningen.git
@@ -19,63 +36,115 @@ cd groningen
 cargo build --release
 ```
 
-The binary will be available at `target/release/groningen`.
+The binary is created at:
 
-## TUI usage
-
-```bash
-cargo run
+```text
+target/release/groningen
 ```
 
-Keybindings:
+Install the `groningen` command into your Cargo bin directory:
 
-| Key | Action |
-| --- | --- |
-| `i` | Edit source text, install selected extension, or cycle theme depending on the focused pane |
-| `Esc` | Return to normal mode |
-| `Tab` | Switch Source → Target → Extensions → Settings |
-| `↑` / `↓` or `k` / `j` | Select a language extension |
-| `Enter` | Translate the current source text |
-| `Ctrl+D` | Download/install the active language model |
-| `q` | Quit |
+```bash
+cargo install --path . --locked
+```
 
-## CLI usage
+Make sure Cargo binaries are on your shell `PATH`:
 
-Install a language extension:
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+```
+
+After that, run the app from any terminal with:
+
+```bash
+groningen
+```
+
+## Quick start
+
+Open the TUI:
+
+```bash
+groningen
+```
+
+Translate from a pipe:
+
+```bash
+echo "hello world" | groningen -t it
+```
+
+Install a bundled language-pair extension:
 
 ```bash
 groningen install en-it
 ```
 
-List bundled extensions:
+List bundled extensions and install status:
 
 ```bash
 groningen list
 ```
 
-Translate from a Unix pipe without opening the TUI:
+## TUI controls
 
-```bash
-echo "Computers process data" | groningen -t it
+| Key | Action |
+| --- | --- |
+| `i` | Edit source text, install selected extension, or cycle theme depending on the focused pane |
+| `c` | Clear source and translation buffers |
+| `Esc` | Return to normal mode |
+| `Tab` | Switch Source → Target → Extensions → Settings |
+| `↑` / `↓` or `k` / `j` | Select a language extension |
+| `Enter` | Translate the current source text with the active language pair |
+| `Ctrl+D` | Download/install the active language model |
+| `q` or `Ctrl+C` | Quit |
+
+## CLI reference
+
+```text
+groningen [OPTIONS] [COMMAND]
 ```
 
-## Architecture
+Options:
+
+| Option | Description | Default |
+| --- | --- | --- |
+| `-s, --source <SOURCE_LANG>` | Source language code for pipe mode | `en` |
+| `-t, --to <TARGET_LANG>` | Target language code for pipe mode | `it` |
+| `-h, --help` | Show help | |
+| `-V, --version` | Show version | |
+
+Commands:
+
+| Command | Description |
+| --- | --- |
+| `install <PAIR>` | Install a language-pair model, for example `en-it` |
+| `list` | Show available extensions and whether each model file is installed |
+
+Pipe-mode examples:
+
+```bash
+echo "computers process data" | groningen -s en -t it
+printf 'fast local translation\n' | groningen --source en --to de
+```
+
+## Project layout
 
 ```text
 src/
-├── main.rs         # Event loop, MPSC channel router, CLI entry point
-├── cli.rs          # Clap definitions and shell piping mode
-├── app.rs          # AppState, input modes, themes, extension selection, mutations
+├── main.rs         # Tokio runtime, TUI event loop, task spawning
+├── cli.rs          # Clap commands, pipe mode, extension list/install output
+├── app.rs          # AppState, input modes, panes, themes, state transitions
 ├── tui/
 │   ├── mod.rs      # Raw terminal lifecycle management
-│   ├── ui.rs       # Ratatui layouts, theme styling, panes, status bar
+│   ├── ui.rs       # Ratatui layouts, colors, panes, status bar
 │   └── events.rs   # Crossterm event listener to MPSC
 ├── manager/
-│   ├── mod.rs      # Model downloader and config/model directory setup
-│   └── registry.rs # Extension manifest parser and bundled index
+│   ├── mod.rs      # Config/model directories and downloader
+│   └── registry.rs # Extension manifests and bundled registry
 └── engine/
     ├── mod.rs      # TranslationEngine trait
-    └── dummy.rs    # Mock offline inference engine
+    └── dummy.rs    # Mock local inference engine
 ```
 
 Model files are stored under your platform config directory, typically:
@@ -84,6 +153,32 @@ Model files are stored under your platform config directory, typically:
 ~/.config/groningen/models/
 ```
 
-## Development status
+## Development
 
-This repository currently ships a mock engine and mock extension URLs so the UI/CLI flow can be reviewed without large model artifacts. Failed network downloads create a deterministic mock `.bin` model file, which keeps the install flow demo-friendly while preserving the async downloader path for future real registries.
+Format and check the project:
+
+```bash
+cargo fmt
+cargo check
+```
+
+Run the app locally:
+
+```bash
+groningen
+```
+
+If you do not want to install the binary, use `cargo run` from the repository instead. For example: `cargo run -- list`.
+
+## Roadmap
+
+- Wire installer URLs to manifest data instead of the current mock URL builder.
+- Add a remote registry command once installer behavior is backed by manifest data.
+- Add checksum verification for model files.
+- Add a real inference backend behind `TranslationEngine`.
+- Persist user settings such as theme and last active language pair.
+- Add integration tests for CLI output and registry parsing.
+
+## License
+
+No license file is currently included. Add one before publishing packages or accepting external contributions.
