@@ -42,22 +42,10 @@ The binary is created at:
 target/release/groningen
 ```
 
-Install the `groningen` command into your Cargo bin directory:
+Optional local install:
 
 ```bash
-cargo install --path . --locked
-```
-
-Make sure Cargo binaries are on your shell `PATH`:
-
-```bash
-export PATH="$HOME/.cargo/bin:$PATH"
-```
-
-After that, run the app from any terminal with:
-
-```bash
-groningen
+cargo install --path .
 ```
 
 ## Quick start
@@ -65,25 +53,25 @@ groningen
 Open the TUI:
 
 ```bash
-groningen
+groningen list
 ```
 
 Translate from a pipe:
 
 ```bash
-echo "hello world" | groningen -t it
+echo "hello world" | cargo run -- -t it
 ```
 
 Install a bundled language-pair extension:
 
 ```bash
-groningen install en-it
+cargo run -- install en-it
 ```
 
 List bundled extensions and install status:
 
 ```bash
-groningen list
+cargo run -- list
 ```
 
 ## TUI controls
@@ -165,10 +153,8 @@ cargo check
 Run the app locally:
 
 ```bash
-groningen
+cargo run
 ```
-
-If you do not want to install the binary, use `cargo run` from the repository instead. For example: `cargo run -- list`.
 
 ## Roadmap
 
