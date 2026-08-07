@@ -28,6 +28,13 @@ async fn run_tui() -> anyhow::Result<()> {
 
     let engine = Arc::new(DummyEngine::new(manager::models_dir()?));
     let mut app = AppState::default();
+    let installed_pairs = app
+        .extensions
+        .iter()
+        .filter(|item| engine.is_model_installed(&item.pair))
+        .map(|item| item.pair.clone())
+        .collect::<Vec<_>>();
+    app.mark_installed_models(installed_pairs);
 
     loop {
         terminal
@@ -38,7 +45,9 @@ async fn run_tui() -> anyhow::Result<()> {
         };
         match app.handle_event(event) {
             AppAction::Quit => break,
-            AppAction::Translate => spawn_translation(&app, engine.clone(), tx.clone()),
+            AppAction::Translate { source, target } => {
+                spawn_translation(&app, engine.clone(), tx.clone(), source, target)
+            }
             AppAction::DownloadActiveModel => spawn_download(&app, tx.clone()),
             AppAction::None => {}
         }
@@ -53,10 +62,12 @@ fn spawn_translation(
     app: &AppState,
     engine: Arc<dyn TranslationEngine>,
     tx: mpsc::Sender<AppEvent>,
+    source: String,
+    target: String,
 ) {
     let text = app.input_buffer.clone();
     tokio::spawn(async move {
-        let event = match engine.translate(&text, "en", "it").await {
+        let event = match engine.translate(&text, &source, &target).await {
             Ok(output) => AppEvent::TranslationReady(output),
             Err(err) => AppEvent::Error(err.to_string()),
         };

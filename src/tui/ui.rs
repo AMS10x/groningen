@@ -72,12 +72,7 @@ pub fn draw(frame: &mut Frame<'_>, app: &AppState) {
 }
 
 fn draw_top_bar(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) {
-    let model = app
-        .active_model
-        .as_deref()
-        .unwrap_or("none")
-        .to_ascii_uppercase()
-        .replace('-', " ➔ ");
+    let model = app.active_language_label();
     let line = Line::from(vec![
         Span::styled(
             " GRONINGEN ",
@@ -97,7 +92,11 @@ fn draw_top_bar(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme)
         ),
     ]);
     frame.render_widget(
-        Paragraph::new(line).block(Block::default().borders(Borders::ALL).bg(theme.base)),
+        Paragraph::new(line).block(
+            Block::default()
+                .borders(Borders::ALL)
+                .style(Style::default().bg(theme.base)),
+        ),
         area,
     );
 }
@@ -114,7 +113,7 @@ fn draw_workspace(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Them
         .style(Style::default().fg(theme.text).bg(theme.base))
         .block(
             Block::default()
-                .title(" Source Text [English] ")
+                .title(" Source Text ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(source_border)),
         )
@@ -132,7 +131,7 @@ fn draw_workspace(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Them
         .style(Style::default().fg(theme.success).bg(theme.base))
         .block(
             Block::default()
-                .title(" Translation [Italian] ")
+                .title(" Translation ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(target_border)),
         )
@@ -193,8 +192,9 @@ fn draw_drawer(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) 
     );
 
     let settings = Paragraph::new(format!(
-        "Theme\n  {}\n\nPress i while this pane is focused to cycle theme.\nUse Tab to focus settings.",
-        app.theme.label()
+        "Theme\n  {}\n\nActive model\n  {}\n\nPress i while this pane is focused to cycle theme.",
+        app.theme.label(),
+        app.active_language_label()
     ))
     .style(Style::default().fg(theme.text).bg(theme.base))
     .block(
@@ -229,7 +229,7 @@ fn draw_status(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) 
         InputMode::Normal => "NORMAL",
         InputMode::Editing => "EDIT",
     };
-    let keys = "[i] Edit/Install/Theme | [Esc] Normal | [Tab] Pane | [↑↓/jk] Select Extension | [Enter] Translate | [q] Quit";
+    let keys = "[i] Edit/Install/Theme | [c] Clear | [Esc] Normal | [Tab] Pane | [↑↓/jk] Select Extension | [Enter] Translate | [q] Quit";
     let line = format!(" {mode} | {keys} | {}", app.status_message);
     frame.render_widget(
         Paragraph::new(line)
