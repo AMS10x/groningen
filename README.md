@@ -53,7 +53,7 @@ cargo install --path .
 Open the TUI:
 
 ```bash
-cargo run
+groningen list
 ```
 
 Translate from a pipe:
