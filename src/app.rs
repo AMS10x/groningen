@@ -55,11 +55,11 @@ impl ThemeName {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum AppAction {
     None,
     Quit,
-    Translate,
+    Translate { source: String, target: String },
     DownloadActiveModel,
 }
 
@@ -129,6 +129,19 @@ impl Default for AppState {
 }
 
 impl AppState {
+    pub fn mark_installed_models<I, S>(&mut self, installed_pairs: I)
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        for pair in installed_pairs {
+            let pair = pair.as_ref();
+            if let Some(item) = self.extensions.iter_mut().find(|item| item.pair == pair) {
+                item.installed = true;
+            }
+        }
+    }
+
     pub fn handle_event(&mut self, event: AppEvent) -> AppAction {
         match event {
             AppEvent::Input(key) => self.handle_key(key),
@@ -197,6 +210,14 @@ impl AppState {
             KeyCode::Char('i') => {
                 self.input_mode = InputMode::Editing;
                 self.active_pane = ActivePane::Source;
+                self.status_message =
+                    "Editing source — Enter translates, Esc returns to normal".to_string();
+                AppAction::None
+            }
+            KeyCode::Char('c') => {
+                self.input_buffer.clear();
+                self.output_buffer.clear();
+                self.status_message = "Cleared source and translation".to_string();
                 AppAction::None
             }
             KeyCode::Tab => {
@@ -239,9 +260,32 @@ impl AppState {
         if self.input_buffer.trim().is_empty() {
             return AppAction::None;
         }
+        let Some((source, target)) = self.active_language_pair() else {
+            self.status_message = "Select or install a language extension first".to_string();
+            return AppAction::None;
+        };
         self.is_translating = true;
-        self.status_message = "Translating...".to_string();
-        AppAction::Translate
+        self.input_mode = InputMode::Normal;
+        self.status_message = format!("Translating {source} → {target}...");
+        AppAction::Translate { source, target }
+    }
+
+    pub fn active_language_pair(&self) -> Option<(String, String)> {
+        let pair = self.active_model.as_deref()?;
+        pair.split_once('-')
+            .map(|(source, target)| (source.to_string(), target.to_string()))
+    }
+
+    pub fn active_language_label(&self) -> String {
+        self.active_language_pair()
+            .map(|(source, target)| {
+                format!(
+                    "{} → {}",
+                    source.to_ascii_uppercase(),
+                    target.to_ascii_uppercase()
+                )
+            })
+            .unwrap_or_else(|| "none".to_string())
     }
 
     fn install_selected_extension(&mut self) -> AppAction {
@@ -284,5 +328,74 @@ pub fn progress_percent(current: u64, total: u64) -> u64 {
         0
     } else {
         current.saturating_mul(100) / total
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+    fn key(code: KeyCode) -> AppEvent {
+        AppEvent::Input(KeyEvent::new(code, KeyModifiers::NONE))
+    }
+
+    #[test]
+    fn active_language_pair_is_derived_from_active_model() {
+        let app = AppState::default();
+
+        assert_eq!(
+            app.active_language_pair(),
+            Some(("en".to_string(), "it".to_string()))
+        );
+        assert_eq!(app.active_language_label(), "EN → IT");
+    }
+
+    #[test]
+    fn mark_installed_models_updates_matching_extensions_only() {
+        let mut app = AppState::default();
+
+        app.mark_installed_models(["en-es", "missing-pair"]);
+
+        assert!(!app.extensions[0].installed);
+        assert!(app.extensions[1].installed);
+        assert!(!app.extensions[2].installed);
+    }
+
+    #[test]
+    fn clear_shortcut_empties_source_and_target_buffers() {
+        let mut app = AppState {
+            input_buffer: "hello".to_string(),
+            output_buffer: "ciao".to_string(),
+            ..AppState::default()
+        };
+
+        let action = app.handle_event(key(KeyCode::Char('c')));
+
+        assert_eq!(action, AppAction::None);
+        assert!(app.input_buffer.is_empty());
+        assert!(app.output_buffer.is_empty());
+        assert_eq!(app.status_message, "Cleared source and translation");
+    }
+
+    #[test]
+    fn translation_action_carries_active_language_pair() {
+        let mut app = AppState {
+            input_buffer: "hello world".to_string(),
+            active_model: Some("en-de".to_string()),
+            ..AppState::default()
+        };
+
+        let action = app.handle_event(key(KeyCode::Enter));
+
+        assert_eq!(
+            action,
+            AppAction::Translate {
+                source: "en".to_string(),
+                target: "de".to_string()
+            }
+        );
+        assert!(app.is_translating);
+        assert_eq!(app.input_mode, InputMode::Normal);
     }
 }

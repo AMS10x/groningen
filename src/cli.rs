@@ -23,7 +23,12 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 pub enum Commands {
-    Install { pair: String },
+    /// Install a language-pair model extension.
+    Install {
+        /// Language pair to install, such as en-it.
+        pair: String,
+    },
+    /// List available language-pair extensions.
     List,
 }
 
