@@ -184,7 +184,7 @@ fn draw_drawer(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) 
     frame.render_widget(
         List::new(items.collect::<Vec<_>>()).block(
             Block::default()
-                .title(" Extensions — click/press i to install like VS Code or LazyVim ")
+                .title(" Extensions — x activates/installs selected language ")
                 .borders(Borders::ALL)
                 .border_style(Style::default().fg(focused(app, ActivePane::ExtensionList, theme))),
         ),
@@ -192,7 +192,7 @@ fn draw_drawer(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) 
     );
 
     let settings = Paragraph::new(format!(
-        "Theme\n  {}\n\nActive model\n  {}\n\nPress i while this pane is focused to cycle theme.",
+        "Theme\n  {}\n\nActive model\n  {}\n\nPress t to cycle theme. Tab only changes panes.",
         app.theme.label(),
         app.active_language_label()
     ))
@@ -229,7 +229,7 @@ fn draw_status(frame: &mut Frame<'_>, area: Rect, app: &AppState, theme: Theme) 
         InputMode::Normal => "NORMAL",
         InputMode::Editing => "EDIT",
     };
-    let keys = "[i] Edit/Install/Theme | [c] Clear | [Esc] Normal | [Tab] Pane | [↑↓/jk] Select Extension | [Enter] Translate | [q] Quit";
+    let keys = "[e] Edit | [x] Activate/Install | [t] Theme | [c] Clear | [Esc] Normal | [Tab] Pane | [↑↓/jk] Select | [Enter] Translate | [q] Quit";
     let line = format!(" {mode} | {keys} | {}", app.status_message);
     frame.render_widget(
         Paragraph::new(line)

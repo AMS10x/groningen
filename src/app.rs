@@ -102,25 +102,35 @@ impl Default for AppState {
             active_model: Some("en-it".to_string()),
             is_translating: false,
             download_progress: None,
-            status_message: "Welcome — press i to edit source or install the selected extension"
+            status_message: "Welcome — press e to edit, x to install/activate, t to cycle theme"
                 .to_string(),
             should_quit: false,
             theme: ThemeName::CatppuccinMocha,
             extensions: vec![
                 ExtensionItem {
-                    pair: "en-it".to_string(),
-                    name: "English → Italian".to_string(),
-                    installed: false,
-                },
-                ExtensionItem {
                     pair: "en-es".to_string(),
                     name: "English → Spanish".to_string(),
-                    installed: false,
+                    installed: true,
+                },
+                ExtensionItem {
+                    pair: "en-it".to_string(),
+                    name: "English → Italian".to_string(),
+                    installed: true,
                 },
                 ExtensionItem {
                     pair: "en-de".to_string(),
                     name: "English → German".to_string(),
-                    installed: false,
+                    installed: true,
+                },
+                ExtensionItem {
+                    pair: "en-ru".to_string(),
+                    name: "English → Russian".to_string(),
+                    installed: true,
+                },
+                ExtensionItem {
+                    pair: "en-fr".to_string(),
+                    name: "English → French".to_string(),
+                    installed: true,
                 },
             ],
             selected_extension: 0,
@@ -199,15 +209,13 @@ impl AppState {
                 self.should_quit = true;
                 AppAction::Quit
             }
-            KeyCode::Char('i') if self.active_pane == ActivePane::ExtensionList => {
-                self.install_selected_extension()
-            }
-            KeyCode::Char('i') if self.active_pane == ActivePane::Settings => {
+            KeyCode::Char('x') => self.install_selected_extension(),
+            KeyCode::Char('t') => {
                 self.theme = self.theme.next();
                 self.status_message = format!("Theme set to {}", self.theme.label());
                 AppAction::None
             }
-            KeyCode::Char('i') => {
+            KeyCode::Char('e') => {
                 self.input_mode = InputMode::Editing;
                 self.active_pane = ActivePane::Source;
                 self.status_message =
@@ -257,7 +265,12 @@ impl AppState {
     }
 
     fn request_translation(&mut self) -> AppAction {
+        if self.is_translating {
+            self.status_message = "Translation already in progress".to_string();
+            return AppAction::None;
+        }
         if self.input_buffer.trim().is_empty() {
+            self.status_message = "Enter source text before translating".to_string();
             return AppAction::None;
         }
         let Some((source, target)) = self.active_language_pair() else {
@@ -289,11 +302,21 @@ impl AppState {
     }
 
     fn install_selected_extension(&mut self) -> AppAction {
+        if self.download_progress.is_some() {
+            self.status_message = "An extension install is already in progress".to_string();
+            return AppAction::None;
+        }
         if let Some(item) = self.extensions.get(self.selected_extension) {
             self.active_model = Some(item.pair.clone());
-            self.status_message = format!("Installing {}...", item.name);
-            AppAction::DownloadActiveModel
+            if item.installed {
+                self.status_message = format!("Activated {}", item.name);
+                AppAction::None
+            } else {
+                self.status_message = format!("Installing {}...", item.name);
+                AppAction::DownloadActiveModel
+            }
         } else {
+            self.status_message = "No extension selected".to_string();
             AppAction::None
         }
     }
@@ -357,9 +380,9 @@ mod tests {
 
         app.mark_installed_models(["en-es", "missing-pair"]);
 
-        assert!(!app.extensions[0].installed);
+        assert!(app.extensions[0].installed);
         assert!(app.extensions[1].installed);
-        assert!(!app.extensions[2].installed);
+        assert!(app.extensions[2].installed);
     }
 
     #[test]
@@ -376,6 +399,31 @@ mod tests {
         assert!(app.input_buffer.is_empty());
         assert!(app.output_buffer.is_empty());
         assert_eq!(app.status_message, "Cleared source and translation");
+    }
+
+    #[test]
+    fn activate_installed_extension_uses_dedicated_key_without_downloading() {
+        let mut app = AppState::default();
+
+        let action = app.handle_event(key(KeyCode::Char('x')));
+
+        assert_eq!(action, AppAction::None);
+        assert_eq!(app.active_model.as_deref(), Some("en-es"));
+        assert_eq!(app.status_message, "Activated English → Spanish");
+    }
+
+    #[test]
+    fn translation_is_not_reentered_while_in_progress() {
+        let mut app = AppState {
+            input_buffer: "hello world".to_string(),
+            is_translating: true,
+            ..AppState::default()
+        };
+
+        let action = app.handle_event(key(KeyCode::Enter));
+
+        assert_eq!(action, AppAction::None);
+        assert_eq!(app.status_message, "Translation already in progress");
     }
 
     #[test]

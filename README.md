@@ -16,9 +16,9 @@ Groningen is built as a portfolio-grade Rust systems app with clear seams for fu
 ## Features
 
 - **Interactive dual-pane TUI** for source and translated text.
-- **Language extension drawer** with install/activate behavior inspired by VS Code and LazyVim.
+- **Language extension drawer** with one-key-per-action controls and install/activate behavior inspired by VS Code and LazyVim.
 - **Installed-model detection** when the TUI starts, so previously downloaded extensions are marked immediately.
-- **Active language-pair routing** so TUI translations use the selected extension instead of hard-coded labels.
+- **Active language-pair routing** with Spanish, Italian, German, Russian, and French preinstalled for immediate use.
 - **Theme switcher** with Catppuccin Mocha, Groningen Light, and Terminal Classic.
 - **Unix pipe mode** for scriptable translation.
 - **Offline-friendly mock engine** that translates a small vocabulary and reverses unknown words.
@@ -62,13 +62,13 @@ Translate from a pipe:
 echo "hello world" | cargo run -- -t it
 ```
 
-Install a bundled language-pair extension:
+Activate or install a bundled language-pair extension:
 
 ```bash
 cargo run -- install en-it
 ```
 
-List bundled extensions and install status:
+List bundled preinstalled extensions and install status:
 
 ```bash
 cargo run -- list
@@ -78,13 +78,14 @@ cargo run -- list
 
 | Key | Action |
 | --- | --- |
-| `i` | Edit source text, install selected extension, or cycle theme depending on the focused pane |
+| `e` | Edit source text |
+| `x` | Activate the selected preinstalled extension, or install it if a model file is missing |
+| `t` | Cycle theme |
 | `c` | Clear source and translation buffers |
 | `Esc` | Return to normal mode |
 | `Tab` | Switch Source → Target → Extensions → Settings |
 | `↑` / `↓` or `k` / `j` | Select a language extension |
 | `Enter` | Translate the current source text with the active language pair |
-| `Ctrl+D` | Download/install the active language model |
 | `q` or `Ctrl+C` | Quit |
 
 ## CLI reference

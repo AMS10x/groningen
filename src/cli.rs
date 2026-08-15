@@ -100,7 +100,7 @@ async fn print_extension_list() -> anyhow::Result<()> {
         {
             "installed"
         } else {
-            "available"
+            "preinstalled"
         };
         println!(
             "{}\t{}\t{}",
