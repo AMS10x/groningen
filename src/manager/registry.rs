@@ -42,5 +42,19 @@ pub fn bundled_extensions() -> Vec<ExtensionManifest> {
             checksum: None,
             size_bytes: Some(1_048_576),
         },
+        ExtensionManifest {
+            language_pair: "en-ru".to_string(),
+            display_name: "English → Russian (mock)".to_string(),
+            url: "https://example.com/groningen/models/en-ru.bin".to_string(),
+            checksum: None,
+            size_bytes: Some(1_048_576),
+        },
+        ExtensionManifest {
+            language_pair: "en-fr".to_string(),
+            display_name: "English → French (mock)".to_string(),
+            url: "https://example.com/groningen/models/en-fr.bin".to_string(),
+            checksum: None,
+            size_bytes: Some(1_048_576),
+        },
     ]
 }

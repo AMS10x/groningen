@@ -16,9 +16,9 @@ Groningen is built as a portfolio-grade Rust systems app with clear seams for fu
 ## Features
 
 - **Interactive dual-pane TUI** for source and translated text.
-- **Language extension drawer** with install/activate behavior inspired by VS Code and LazyVim.
+- **Language extension drawer** with one-key-per-action controls and install/activate behavior inspired by VS Code and LazyVim.
 - **Installed-model detection** when the TUI starts, so previously downloaded extensions are marked immediately.
-- **Active language-pair routing** so TUI translations use the selected extension instead of hard-coded labels.
+- **Active language-pair routing** with Spanish, Italian, German, Russian, and French preinstalled for immediate use.
 - **Theme switcher** with Catppuccin Mocha, Groningen Light, and Terminal Classic.
 - **Unix pipe mode** for scriptable translation.
 - **Offline-friendly mock engine** that translates a small vocabulary and reverses unknown words.
@@ -27,6 +27,77 @@ Groningen is built as a portfolio-grade Rust systems app with clear seams for fu
 
 - Rust stable toolchain, edition 2021 compatible.
 - Linux or macOS terminal with ANSI color support.
+
+## EndeavourOS step-by-step guide
+
+EndeavourOS is Arch-based, so install the standard Rust and build tooling first:
+
+```bash
+sudo pacman -Syu git rust cargo base-devel pkgconf openssl
+```
+
+Clone the project and enter the repository:
+
+```bash
+git clone https://github.com/AMS10x/groningen.git
+cd groningen
+```
+
+Build and test the app:
+
+```bash
+cargo build
+cargo test
+```
+
+Launch the terminal UI from the repository:
+
+```bash
+cargo run
+```
+
+Use the TUI with these basic steps:
+
+1. Press `Tab` to move between Source, Translation, Extensions, and Settings.
+2. Press `e` to edit the source text.
+3. Type a phrase such as `hello world`.
+4. Press `Enter` to translate.
+5. Use `↑` / `↓` or `k` / `j` to pick Spanish, Italian, German, Russian, or French.
+6. Press `x` to activate the selected language.
+7. Press `t` to cycle themes.
+8. Press `q` to quit.
+
+Run one-off CLI translations without opening the TUI:
+
+```bash
+echo "hello world" | cargo run -- -t es
+echo "fast local translation" | cargo run -- -t de
+echo "computers process data" | cargo run -- -t ru
+```
+
+List the bundled language extensions:
+
+```bash
+cargo run -- list
+```
+
+Optionally install the binary into Cargo's local bin directory:
+
+```bash
+cargo install --path .
+```
+
+After that, make sure `~/.cargo/bin` is on your `PATH`, then launch with:
+
+```bash
+groningen
+```
+
+If `groningen` is not found after installing, add Cargo's bin directory for the current shell session:
+
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+```
 
 ## Installation
 
@@ -53,7 +124,7 @@ cargo install --path .
 Open the TUI:
 
 ```bash
-groningen list
+cargo run
 ```
 
 Translate from a pipe:
@@ -62,13 +133,13 @@ Translate from a pipe:
 echo "hello world" | cargo run -- -t it
 ```
 
-Install a bundled language-pair extension:
+Activate or install a bundled language-pair extension:
 
 ```bash
 cargo run -- install en-it
 ```
 
-List bundled extensions and install status:
+List bundled preinstalled extensions and install status:
 
 ```bash
 cargo run -- list
@@ -78,13 +149,14 @@ cargo run -- list
 
 | Key | Action |
 | --- | --- |
-| `i` | Edit source text, install selected extension, or cycle theme depending on the focused pane |
+| `e` | Edit source text |
+| `x` | Activate the selected preinstalled extension, or install it if a model file is missing |
+| `t` | Cycle theme |
 | `c` | Clear source and translation buffers |
 | `Esc` | Return to normal mode |
 | `Tab` | Switch Source → Target → Extensions → Settings |
 | `↑` / `↓` or `k` / `j` | Select a language extension |
 | `Enter` | Translate the current source text with the active language pair |
-| `Ctrl+D` | Download/install the active language model |
 | `q` or `Ctrl+C` | Quit |
 
 ## CLI reference
