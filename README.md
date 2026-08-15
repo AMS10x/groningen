@@ -28,9 +28,9 @@ Groningen is built as a portfolio-grade Rust systems app with clear seams for fu
 - Rust stable toolchain, edition 2021 compatible.
 - Linux or macOS terminal with ANSI color support.
 
-## EndeavourOS step-by-step guide
+## Arch-based step-by-step guide
 
-EndeavourOS is Arch-based, so install the standard Rust and build tooling first:
+Install the standard Rust and build tooling first:
 
 ```bash
 sudo pacman -Syu git rust cargo base-devel pkgconf openssl
