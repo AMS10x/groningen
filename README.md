@@ -28,6 +28,77 @@ Groningen is built as a portfolio-grade Rust systems app with clear seams for fu
 - Rust stable toolchain, edition 2021 compatible.
 - Linux or macOS terminal with ANSI color support.
 
+## EndeavourOS step-by-step guide
+
+EndeavourOS is Arch-based, so install the standard Rust and build tooling first:
+
+```bash
+sudo pacman -Syu git rust cargo base-devel pkgconf openssl
+```
+
+Clone the project and enter the repository:
+
+```bash
+git clone https://github.com/AMS10x/groningen.git
+cd groningen
+```
+
+Build and test the app:
+
+```bash
+cargo build
+cargo test
+```
+
+Launch the terminal UI from the repository:
+
+```bash
+cargo run
+```
+
+Use the TUI with these basic steps:
+
+1. Press `Tab` to move between Source, Translation, Extensions, and Settings.
+2. Press `e` to edit the source text.
+3. Type a phrase such as `hello world`.
+4. Press `Enter` to translate.
+5. Use `↑` / `↓` or `k` / `j` to pick Spanish, Italian, German, Russian, or French.
+6. Press `x` to activate the selected language.
+7. Press `t` to cycle themes.
+8. Press `q` to quit.
+
+Run one-off CLI translations without opening the TUI:
+
+```bash
+echo "hello world" | cargo run -- -t es
+echo "fast local translation" | cargo run -- -t de
+echo "computers process data" | cargo run -- -t ru
+```
+
+List the bundled language extensions:
+
+```bash
+cargo run -- list
+```
+
+Optionally install the binary into Cargo's local bin directory:
+
+```bash
+cargo install --path .
+```
+
+After that, make sure `~/.cargo/bin` is on your `PATH`, then launch with:
+
+```bash
+groningen
+```
+
+If `groningen` is not found after installing, add Cargo's bin directory for the current shell session:
+
+```bash
+export PATH="$HOME/.cargo/bin:$PATH"
+```
+
 ## Installation
 
 ```bash
@@ -53,7 +124,7 @@ cargo install --path .
 Open the TUI:
 
 ```bash
-groningen list
+cargo run
 ```
 
 Translate from a pipe:
